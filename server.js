@@ -9,9 +9,9 @@ class Server {
 
     this.app = express();
     this.app.use(express.json());
-    this.app.use(express.static('public')); // sirve HTML y js
+    this.app.use(express.static('public'));
 
-    // database setup
+
     this.sequelize = new Sequelize(
       process.env.DB_NAME,
       process.env.DB_USER,
@@ -29,7 +29,7 @@ class Server {
       genero: { type: DataTypes.STRING }
     });
 
-    // middleware and routes
+
     const proteger = (req, res, next) => {
       const token = req.header('Authorization')?.split(' ')[1];
       if (!token) return res.status(401).send('No autorizado');
