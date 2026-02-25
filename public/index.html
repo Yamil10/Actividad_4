@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameManager | Tu Gestor de Juegos</title>
+    <style>
+        :root { --primary: #6366f1; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .container { width: 100%; max-width: 450px; }
+        .card { background: var(--card); padding: 2rem; border-radius: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #334155; }
+        h2 { text-align: center; color: var(--primary); margin-bottom: 1.5rem; }
+        input { width: 100%; padding: 0.8rem; margin: 0.5rem 0; border-radius: 0.5rem; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; outline: none; }
+        input:focus { border-color: var(--primary); }
+        button { width: 100%; padding: 0.8rem; border: none; border-radius: 0.5rem; background: var(--primary); color: white; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        .hidden { display: none; }
+        .game-item { background: #334155; padding: 12px; margin-top: 10px; border-radius: 0.5rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--primary); }
+        .logout-btn { background: #ef4444; margin-top: 2rem; }
+        .switch-btn { background: transparent; border: 1px solid var(--primary); color: var(--primary); margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="auth-view" class="card">
+        <h2 id="auth-title">GameManager Pro</h2>
+        <input type="text" id="user" placeholder="Nombre de usuario">
+        <input type="password" id="pass" placeholder="Contraseña">
+        
+        <button onclick="enviarAuth('/api/login')">Iniciar Sesión</button>
+        <button class="switch-btn" onclick="enviarAuth('/api/signup')">Registrarse (Sign Up)</button>
+        <p id="auth-msg" style="text-align:center; font-size: 0.8rem; margin-top: 10px;"></p>
+    </div>
+
+    <div id="game-view" class="card hidden">
+        <h2>Mis Videojuegos</h2>
+        <div style="margin-bottom: 20px;">
+            <input type="text" id="game-title" placeholder="Título del juego">
+            <input type="text" id="game-genre" placeholder="Género (Ej: RPG, Acción)">
+            <button onclick="agregarJuego()">+ Guardar en MySQL</button>
+        </div>
+        
+        <div id="listado-juegos">
+            </div>
+
+        <button class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
+    </div>
+</div>
+
+<script>
+    const authView = document.getElementById('auth-view');
+    const gameView = document.getElementById('game-view');
+    const authMsg = document.getElementById('auth-msg');
+
+    // Al cargar, verificar si ya tenemos un token
+    if (localStorage.getItem('token')) mostrarDashboard();
+
+    async function enviarAuth(ruta) {
+        const username = document.getElementById('user').value;
+        const password = document.getElementById('pass').value;
+
+        try {
+            const res = await fetch(ruta, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+                mostrarDashboard();
+            } else if (data.ok) {
+                authMsg.innerText = "¡Registro exitoso! Ahora puedes entrar.";
+                authMsg.style.color = "#10b981";
+            } else {
+                authMsg.innerText = data.error || "Error en la operación";
+                authMsg.style.color = "#ef4444";
+            }
+        } catch (e) {
+            authMsg.innerText = "Error: ¿Encendiste el servidor?";
+        }
+    }
+
+    function mostrarDashboard() {
+        authView.classList.add('hidden');
+        gameView.classList.remove('hidden');
+        cargarJuegos();
+    }
+
+    async function cargarJuegos() {
+        const res = await fetch('/api/juegos', {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const juegos = await res.json();
+        
+        const lista = document.getElementById('listado-juegos');
+        lista.innerHTML = juegos.map(j => `
+            <div class="game-item">
+                <span><strong>${j.titulo}</strong></span>
+                <span style="font-size: 0.8rem; color: #94a3b8;">${j.genero}</span>
+            </div>
+        `).join('');
+    }
+
+    async function agregarJuego() {
+        const titulo = document.getElementById('game-title').value;
+        const genero = document.getElementById('game-genre').value;
+
+        await fetch('/api/juegos', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('token')
+            },
+            body: JSON.stringify({ titulo, genero })
+        });
+
+        document.getElementById('game-title').value = '';
+        document.getElementById('game-genre').value = '';
+        cargarJuegos();
+    }
+
+    function cerrarSesion() {
+        localStorage.removeItem('token');
+        location.reload();
+    }
+</script>
+
+</body>
+</html>
