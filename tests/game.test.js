@@ -6,7 +6,6 @@ const { sequelize } = require('../config/db');
 
 describe('API Juegos SQL', () => {
     beforeAll(async () => {
-        // force sync recreate tables clean for tests
         await sequelize.sync({ force: true });
     });
     it('GET /api/games devuelve arreglo', async () => {

@@ -13,7 +13,6 @@ app.use('/api/games', require('./routes/gameRoutes'));
 
 const PORT = process.env.PORT || 3000;
 
-// sincronizar y arrancar solo en modo distinto a test
 if (process.env.NODE_ENV !== 'test') {
   sequelize.sync({ alter: true }).then(() => {
       console.log('✅ Base de datos sincronizada');

@@ -4,7 +4,6 @@ module.exports = (req, res, next) => {
     let token = req.header('Authorization');
     if (!token) return res.status(401).json({ msg: 'Acceso denegado' });
 
-    // aceptar formato "Bearer <token>"
     if (token.startsWith('Bearer ')) {
         token = token.slice(7).trim();
     }
