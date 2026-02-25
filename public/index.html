@@ -23,14 +23,26 @@
 <body>
 
 <div class="container">
-    <div id="auth-view" class="card">
-        <h2 id="auth-title">GameManager Pro</h2>
-        <input type="text" id="user" placeholder="Nombre de usuario">
-        <input type="password" id="pass" placeholder="Contraseña">
-        
-        <button onclick="enviarAuth('/api/login')">Iniciar Sesión</button>
-        <button class="switch-btn" onclick="enviarAuth('/api/signup')">Registrarse (Sign Up)</button>
-        <p id="auth-msg" style="text-align:center; font-size: 0.8rem; margin-top: 10px;"></p>
+    <div id="login-view" class="card">
+        <h2>Iniciar Sesión</h2>
+        <input type="text" id="login-user" placeholder="Nombre de usuario">
+        <input type="password" id="login-pass" placeholder="Contraseña">
+        <button onclick="login()">Entrar</button>
+        <p style="font-size:0.8rem; margin-top:10px; text-align:center;">
+          ¿No tienes cuenta? <a href="#" onclick="showSignup()">Regístrate</a>
+        </p>
+        <p id="login-msg" style="text-align:center; font-size: 0.8rem; margin-top: 10px;"></p>
+    </div>
+
+    <div id="signup-view" class="card hidden">
+        <h2>Registro</h2>
+        <input type="text" id="signup-user" placeholder="Nombre de usuario">
+        <input type="password" id="signup-pass" placeholder="Contraseña">
+        <button onclick="signup()">Crear cuenta</button>
+        <p style="font-size:0.8rem; margin-top:10px; text-align:center;">
+          ¿Ya tienes cuenta? <a href="#" onclick="showLogin()">Inicia sesión</a>
+        </p>
+        <p id="signup-msg" style="text-align:center; font-size: 0.8rem; margin-top: 10px;"></p>
     </div>
 
     <div id="game-view" class="card hidden">
@@ -49,42 +61,70 @@
 </div>
 
 <script>
-    const authView = document.getElementById('auth-view');
+    const loginView = document.getElementById('login-view');
+    const signupView = document.getElementById('signup-view');
     const gameView = document.getElementById('game-view');
-    const authMsg = document.getElementById('auth-msg');
+    const loginMsg = document.getElementById('login-msg');
+    const signupMsg = document.getElementById('signup-msg');
 
-    // Al cargar, verificar si ya tenemos un token
     if (localStorage.getItem('token')) mostrarDashboard();
 
-    async function enviarAuth(ruta) {
-        const username = document.getElementById('user').value;
-        const password = document.getElementById('pass').value;
+    function showSignup() {
+        loginView.classList.add('hidden');
+        signupView.classList.remove('hidden');
+    }
+    function showLogin() {
+        signupView.classList.add('hidden');
+        loginView.classList.remove('hidden');
+    }
 
+    async function login() {
+        const username = document.getElementById('login-user').value;
+        const password = document.getElementById('login-pass').value;
         try {
-            const res = await fetch(ruta, {
+            const res = await fetch('/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
             const data = await res.json();
-
             if (data.token) {
                 localStorage.setItem('token', data.token);
                 mostrarDashboard();
-            } else if (data.ok) {
-                authMsg.innerText = "¡Registro exitoso! Ahora puedes entrar.";
-                authMsg.style.color = "#10b981";
             } else {
-                authMsg.innerText = data.error || "Error en la operación";
-                authMsg.style.color = "#ef4444";
+                loginMsg.innerText = data.error || "Error en la operación";
+                loginMsg.style.color = "#ef4444";
             }
         } catch (e) {
-            authMsg.innerText = "Error: ¿Encendiste el servidor?";
+            loginMsg.innerText = "Error: ¿Encendiste el servidor?";
+        }
+    }
+
+    async function signup() {
+        const username = document.getElementById('signup-user').value;
+        const password = document.getElementById('signup-pass').value;
+        try {
+            const res = await fetch('/api/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (data.ok) {
+                signupMsg.innerText = "Registro exitoso! Ahora inicia sesión.";
+                signupMsg.style.color = "#10b981";
+            } else {
+                signupMsg.innerText = data.error || "Error en la operación";
+                signupMsg.style.color = "#ef4444";
+            }
+        } catch (e) {
+            signupMsg.innerText = "Error: ¿Encendiste el servidor?";
         }
     }
 
     function mostrarDashboard() {
-        authView.classList.add('hidden');
+        loginView.classList.add('hidden');
+        signupView.classList.add('hidden');
         gameView.classList.remove('hidden');
         cargarJuegos();
     }
@@ -94,7 +134,6 @@
             headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
         });
         const juegos = await res.json();
-        
         const lista = document.getElementById('listado-juegos');
         lista.innerHTML = juegos.map(j => `
             <div class="game-item">
@@ -107,16 +146,14 @@
     async function agregarJuego() {
         const titulo = document.getElementById('game-title').value;
         const genero = document.getElementById('game-genre').value;
-
         await fetch('/api/juegos', {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + localStorage.getItem('token')
             },
             body: JSON.stringify({ titulo, genero })
         });
-
         document.getElementById('game-title').value = '';
         document.getElementById('game-genre').value = '';
         cargarJuegos();
