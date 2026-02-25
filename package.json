@@ -6,9 +6,10 @@
   "directories": {
     "test": "tests"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+"scripts": {
+  "start": "node app.js",
+  "test": "jest --watchAll --detectOpenHandles"
+},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Yamil10/Actividad_4.git"
