@@ -6,10 +6,10 @@
   "directories": {
     "test": "tests"
   },
-"scripts": {
-  "start": "node app.js",
-  "test": "jest --watchAll --detectOpenHandles"
-},
+  "scripts": {
+    "start": "node app.js",
+    "test": "jest --watchAll --detectOpenHandles"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Yamil10/Actividad_4.git"
@@ -29,5 +29,9 @@
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.18.1",
     "sequelize": "^6.37.7"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.2.2"
   }
 }

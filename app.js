@@ -1,32 +1,24 @@
 const express = require('express');
 const path = require('path');
-const sequelize = require('./config/db');
-const gameRoutes = require('./routes/gameRoutes');
-const authRoutes = require('./routes/authRoutes'); // Para login y registro
+const { sequelize } = require('./config/db');
 require('dotenv').config();
 
 const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Middlewares
-app.use(express.json()); // Para parsear JSON
-app.use(express.static('public')); // Para servir la vista HTML estática
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/games', require('./routes/gameRoutes'));
 
-// Rutas
-app.use('/api/games', gameRoutes);
-app.use('/api/auth', authRoutes);
-
-// Sincronización con MySQL y encendido del servidor
 const PORT = process.env.PORT || 3000;
 
-sequelize.sync({ force: false }) // 'force: false' evita borrar los datos cada vez que reinicias
-    .then(() => {
-        console.log('Conectado a MySQL con éxito');
-        app.listen(PORT, () => {
-            console.log(`Servidor corriendo en http://localhost:${PORT}`);
-        });
-    })
-    .catch(err => {
-        console.error('Error al conectar con la base de datos:', err);
-    });
+// sincronizar y arrancar solo en modo distinto a test
+if (process.env.NODE_ENV !== 'test') {
+  sequelize.sync({ alter: true }).then(() => {
+      console.log('✅ Base de datos sincronizada');
+      app.listen(PORT, () => console.log(`🚀 Servidor en http://localhost:${PORT}`));
+  }).catch(err => console.log('❌ Error en DB:', err));
+}
 
-module.exports = app; // Exportamos para las pruebas con Jest
+module.exports = app;
